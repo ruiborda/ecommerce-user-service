@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	router2 "github.com/ruiborda/ecommerce-user-service/src/route"
 	"github.com/ruiborda/go-swagger-generator/src/middleware"
+	"github.com/ruiborda/go-swagger-generator/src/openapi"
+	"github.com/ruiborda/go-swagger-generator/src/swagger"
 	"log/slog"
 	"os"
 	"time"
@@ -29,6 +31,12 @@ func main() {
 		JSONPath: "/openapi.json",
 		UIPath:   "/",
 	}))
+
+	swagger.Swagger().SecurityDefinition("BearerAuth", func(sd openapi.SecurityScheme) {
+		sd.Type("apiKey").
+			Name("Authorization").
+			In("header")
+	})
 
 	router2.ApiRouter(router)
 

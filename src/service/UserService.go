@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/gin-gonic/gin"
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
 )
 
@@ -14,4 +16,6 @@ type UserService interface {
 	FindAllUsersByPageAndSize(page, size int) []*user.GetUserByIdResponse
 	CountAllUsers() int64
 	GetUsersByIds(ids []string) []*user.GetUserByIdResponse
+	// Nuevo método que maneja la paginación completa
+	FindAllUsersPaginated(c *gin.Context, pageable *dto.Pageable) *dto.PaginationResponse[user.GetUserByIdResponse]
 }

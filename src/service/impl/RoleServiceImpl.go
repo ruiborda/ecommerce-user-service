@@ -2,11 +2,14 @@
 package impl
 
 import (
+	"log"
+
+	"github.com/gin-gonic/gin"
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
 	"github.com/ruiborda/ecommerce-user-service/src/mapper"
 	"github.com/ruiborda/ecommerce-user-service/src/repository"
 	"github.com/ruiborda/ecommerce-user-service/src/repository/impl"
-	"log"
 )
 
 type RoleServiceImpl struct {
@@ -132,4 +135,31 @@ func (s *RoleServiceImpl) GetRolesByIds(ids []string) []*role.GetRoleByIdRespons
 	}
 
 	return s.roleMapper.RolesToGetRolesResponse(roles)
+}
+
+// FindAllRolesPaginated obtiene roles paginados y construye la respuesta paginada completa
+func (s *RoleServiceImpl) FindAllRolesPaginated(c *gin.Context, pageable *dto.Pageable) *dto.PaginationResponse[role.GetRoleByIdResponse] {
+	// Convert from one-based (client) to zero-based (service) pagination
+	zeroBasedPage := pageable.Page - 1
+
+	// Obtener datos de roles paginados
+	roles, err := s.roleRepository.FindAllByPageAndSize(zeroBasedPage, pageable.Size)
+	if err != nil {
+		log.Printf("Error fetching paginated roles: %v", err)
+		return nil
+	}
+
+	// Obtener el conteo total de roles
+	totalElements, err := s.roleRepository.Count()
+	if err != nil {
+		log.Printf("Error counting roles: %v", err)
+		return nil
+	}
+
+	// Convertir roles al formato de respuesta usando el mapper
+	roleMapper := &mapper.RoleMapper{}
+	rolesDTO := roleMapper.RolesToGetRolesResponse(roles)
+
+	// Crear la respuesta paginada
+	return dto.NewPaginationResponse(c, &rolesDTO, int(totalElements), pageable)
 }

@@ -37,7 +37,8 @@ var _ = swagger.Swagger().Path("/api/v1/login-with-google").
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("Login response with user details and JWT token").
 					SchemaFromDTO(&auth.LoginWithAnyResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (authController *AuthController) LoginWithGoogle(c *gin.Context) {
@@ -72,7 +73,8 @@ var _ = swagger.Swagger().Path("/api/v1/auth/login-with-email").
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("Login response with user details and JWT token").
 					SchemaFromDTO(&auth.LoginWithAnyResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (authController *AuthController) LoginWithEmail(c *gin.Context) {

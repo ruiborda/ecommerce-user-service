@@ -2,8 +2,8 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
 	"github.com/ruiborda/ecommerce-user-service/src/service"
 	"github.com/ruiborda/ecommerce-user-service/src/service/impl"
@@ -37,7 +37,8 @@ var _ = swagger.Swagger().Path("/api/v1/users").
 				param.Description("User object that needs to be added to the system").
 					Required(true).
 					SchemaFromDTO(&user.CreateUserRequest{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (userController *UserController) CreateUser(c *gin.Context) {
@@ -65,7 +66,8 @@ var _ = swagger.Swagger().Path("/api/v1/users/{id}").
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("User object").
 					SchemaFromDTO(&user.GetUserByIdResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (userController *UserController) GetUserById(c *gin.Context) {
@@ -100,7 +102,8 @@ var _ = swagger.Swagger().Path("/api/v1/users").
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("List of users").
 					SchemaFromDTO(&[]*user.GetUserByIdResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (userController *UserController) GetAllUsers(c *gin.Context) {
@@ -118,7 +121,8 @@ var _ = swagger.Swagger().Path("/api/v1/users").
 				param.Description("User object that needs to be updated").
 					Required(true).
 					SchemaFromDTO(&user.UpdateUserRequest{})
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
@@ -165,7 +169,8 @@ var _ = swagger.Swagger().Path("/api/v1/users/{id}").
 				param.Description("User object that needs to be deleted").
 					Required(true).
 					SchemaFromDTO(&user.DeleteUserByIdResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
@@ -212,32 +217,17 @@ var _ = swagger.Swagger().Path("/api/v1/users/pages").
 				param.Description("Number of items per page").
 					Required(true).
 					Type("integer")
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
 func (userController *UserController) FindAllUsersByPageAndSize(c *gin.Context) {
-	pageStr := c.Query("page")
-	sizeStr := c.Query("size")
+	// Crear objeto Pageable desde parámetros de consulta
+	pageable := dto.NewPageable(c.Query("page"), c.Query("size"), c.Query("query"))
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page parameter"})
-		return
-	}
+	// Usar el nuevo método del servicio que maneja toda la paginación
+	response := userController.userService.FindAllUsersPaginated(c, pageable)
 
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil || size <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid size parameter"})
-		return
-	}
-
-	users := userController.userService.FindAllUsersByPageAndSize(page, size)
-
-	c.JSON(http.StatusOK, gin.H{
-		"users": users,
-		"page":  page,
-		"size":  size,
-		"total": userController.userService.CountAllUsers(),
-	})
+	c.JSON(http.StatusOK, response)
 }

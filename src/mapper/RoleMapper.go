@@ -92,6 +92,13 @@ func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.GetRo
 	return responses
 }
 
+// GetRoleByIdResponseArrayToArray convierte directamente un array de GetRoleByIdResponse a otro array
+// Esta función se usa cuando ya tenemos una lista de DTOs y necesitamos mantenerlos en el mismo formato
+func (m *RoleMapper) GetRoleByIdResponseArrayToArray(dtos []*role.GetRoleByIdResponse) []*role.GetRoleByIdResponse {
+	// En este caso simplemente devolvemos el mismo array ya que ya está en el formato correcto
+	return dtos
+}
+
 // RolesToGetRolesByIdsResponse convierte una lista de modelos Role a una respuesta GetRolesByIdsResponse
 func (m *RoleMapper) RolesToGetRolesByIdsResponse(models []*model.Role) *role.GetRolesByIdsResponse {
 	roleResponses := m.RolesToGetRolesResponse(models)

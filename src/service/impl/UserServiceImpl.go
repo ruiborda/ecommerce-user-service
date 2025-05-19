@@ -1,13 +1,16 @@
 package impl
 
 import (
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
+	"log"
+	"time"
+
+	"github.com/gin-gonic/gin"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
 	"github.com/ruiborda/ecommerce-user-service/src/mapper"
 	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"github.com/ruiborda/ecommerce-user-service/src/repository"
 	"github.com/ruiborda/ecommerce-user-service/src/repository/impl"
-	"log"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -353,6 +356,94 @@ func (s *UserServiceImpl) FindAllUsersByPageAndSize(page, size int) []*user.GetU
 	}
 
 	return userResponses
+}
+
+// FindAllUsersPaginated obtiene usuarios paginados y construye la respuesta paginada completa
+func (s *UserServiceImpl) FindAllUsersPaginated(c *gin.Context, pageable *dto.Pageable) *dto.PaginationResponse[user.GetUserByIdResponse] {
+	// Convert from one-based (client) to zero-based (service) pagination
+	zeroBasedPage := pageable.Page - 1
+
+	// Obtener datos de usuarios paginados
+	users, err := s.userRepository.FindAllByPageAndSize(zeroBasedPage, pageable.Size)
+	if err != nil {
+		log.Printf("Error fetching paginated users: %v", err)
+		return nil
+	}
+
+	// Obtener el conteo total de usuarios
+	totalElements, err := s.userRepository.Count()
+	if err != nil {
+		log.Printf("Error counting users: %v", err)
+		return nil
+	}
+
+	// Create map to store roles for each user
+	rolesMap := make(map[string]*[]model.Role)
+
+	// Collect all role IDs
+	var allRoleIds []string
+	for _, userModel := range users {
+		allRoleIds = append(allRoleIds, userModel.RoleIds...)
+	}
+
+	// Deduplicate role IDs
+	uniqueRoleIds := make(map[string]bool)
+	var uniqueRoleIdsSlice []string
+	for _, roleId := range allRoleIds {
+		if !uniqueRoleIds[roleId] {
+			uniqueRoleIds[roleId] = true
+			uniqueRoleIdsSlice = append(uniqueRoleIdsSlice, roleId)
+		}
+	}
+
+	// Fetch all needed roles in one go
+	var allRolesPtr []*model.Role
+	if len(uniqueRoleIdsSlice) > 0 {
+		allRolesPtr, err = s.roleRepository.FindByIds(uniqueRoleIdsSlice)
+		if err != nil {
+			log.Printf("Error fetching roles: %v", err)
+		}
+	}
+
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var allRoles []model.Role
+	for _, rolePtr := range allRolesPtr {
+		if rolePtr != nil {
+			allRoles = append(allRoles, *rolePtr)
+		}
+	}
+
+	// Create mapping of role ID to role
+	roleById := make(map[string]model.Role)
+	for _, role := range allRoles {
+		roleById[role.Id] = role
+	}
+
+	// Map each user's roles
+	for _, userModel := range users {
+		var userRoles []model.Role
+		for _, roleId := range userModel.RoleIds {
+			if role, ok := roleById[roleId]; ok {
+				userRoles = append(userRoles, role)
+			}
+		}
+		rolesMap[userModel.Id] = &userRoles
+	}
+
+	// Convert users to DTOs
+	var userResponses []*user.GetUserByIdResponse
+	for _, userModel := range users {
+		roles := rolesMap[userModel.Id]
+		if roles == nil {
+			emptyRoles := []model.Role{}
+			roles = &emptyRoles
+		}
+		userDto := s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+		userResponses = append(userResponses, userDto)
+	}
+
+	// Crear la respuesta paginada
+	return dto.NewPaginationResponse(c, &userResponses, int(totalElements), pageable)
 }
 
 // CountAllUsers cuenta el número total de usuarios

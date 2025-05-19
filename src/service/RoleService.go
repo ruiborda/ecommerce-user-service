@@ -2,6 +2,8 @@
 package service
 
 import (
+	"github.com/gin-gonic/gin"
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
 )
 
@@ -14,4 +16,6 @@ type RoleService interface {
 	FindAllRolesByPageAndSize(page, size int) []*role.GetRoleByIdResponse
 	CountAllRoles() int64
 	GetRolesByIds(ids []string) []*role.GetRoleByIdResponse
+	// Nuevo método que maneja la paginación completa
+	FindAllRolesPaginated(c *gin.Context, pageable *dto.Pageable) *dto.PaginationResponse[role.GetRoleByIdResponse]
 }

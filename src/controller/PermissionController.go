@@ -31,12 +31,14 @@ var _ = swagger.Swagger().Path("/api/v1/permissions").
 			Produces(mime.ApplicationJSON).
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("List of all system permissions").
-					SchemaFromDTO(&permission.GetAllPermissionsResponse{})
-			})
+					SchemaFromDTO(&[]permission.GetPermissionByIdResponse{})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (p *PermissionController) GetAllPermissions(c *gin.Context) {
-	response := p.permissionService.GetAllPermissions()
+	// Usar el nuevo método que devuelve un array directamente
+	response := p.permissionService.GetAllPermissionsAsArray()
 	c.JSON(http.StatusOK, response)
 }
 
@@ -62,7 +64,8 @@ var _ = swagger.Swagger().Path("/api/v1/permissions/{id}").
 			Response(http.StatusNotFound, func(response openapi.Response) {
 				response.Description("Permission not found").
 					SchemaFromDTO(&permission.ErrorResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (p *PermissionController) GetPermissionById(c *gin.Context) {
@@ -104,12 +107,13 @@ var _ = swagger.Swagger().Path("/api/v1/permissions/by-ids").
 			}).
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("List of permissions that match the requested IDs").
-					SchemaFromDTO(&permission.GetPermissionsByIdsResponse{})
+					SchemaFromDTO(&[]permission.GetPermissionByIdResponse{})
 			}).
 			Response(http.StatusBadRequest, func(response openapi.Response) {
 				response.Description("Invalid request format").
 					SchemaFromDTO(&permission.ErrorResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 func (p *PermissionController) GetPermissionsByIds(c *gin.Context) {
@@ -125,6 +129,7 @@ func (p *PermissionController) GetPermissionsByIds(c *gin.Context) {
 		return
 	}
 
-	response := p.permissionService.GetPermissionsByIds(&request)
+	// Usar el nuevo método que devuelve un array directamente
+	response := p.permissionService.GetPermissionsByIdsAsArray(&request)
 	c.JSON(http.StatusOK, response)
 }

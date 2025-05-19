@@ -2,8 +2,8 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
+	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
 	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"github.com/ruiborda/ecommerce-user-service/src/service"
@@ -37,7 +37,8 @@ var _ = swagger.Swagger().Path("/api/v1/roles").
 				param.Description("Role object that needs to be added to the system").
 					Required(true).
 					SchemaFromDTO(&role.CreateRoleRequest{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 // CreateRole handles the creation of a new role
@@ -82,7 +83,8 @@ var _ = swagger.Swagger().Path("/api/v1/roles/{id}").
 			Response(http.StatusOK, func(response openapi.Response) {
 				response.Description("Role object").
 					SchemaFromDTO(&role.GetRoleByIdResponse{})
-			})
+			}).
+			Security("BearerAuth")
 	}).Doc()
 
 // GetRoleByID handles retrieval of a role by its ID
@@ -119,7 +121,8 @@ var _ = swagger.Swagger().Path("/api/v1/roles/{id}").
 				param.Description("ID of role to delete").
 					Required(true).
 					Type("string")
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
@@ -163,7 +166,8 @@ var _ = swagger.Swagger().Path("/api/v1/roles").
 				param.Description("Role object that needs to be updated").
 					Required(true).
 					SchemaFromDTO(&role.UpdateRoleRequest{})
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
@@ -231,36 +235,18 @@ var _ = swagger.Swagger().Path("/api/v1/roles/pages").
 				param.Description("Search query").
 					Required(false).
 					Type("string")
-			})
+			}).
+			Security("BearerAuth")
 	}).
 	Doc()
 
 // GetAllByPageAndSize handles retrieval of paginated roles
 func (roleController *RoleController) GetAllByPageAndSize(c *gin.Context) {
-	pageStr := c.Query("page")
-	sizeStr := c.Query("size")
-	query := c.Query("query")
+	// Crear objeto Pageable desde parámetros de consulta
+	pageable := dto.NewPageable(c.Query("page"), c.Query("size"), c.Query("query"))
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page parameter"})
-		return
-	}
+	// Usar el nuevo método del servicio que maneja toda la paginación
+	response := roleController.roleService.FindAllRolesPaginated(c, pageable)
 
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil || size <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid size parameter"})
-		return
-	}
-
-	roles := roleController.roleService.FindAllRolesByPageAndSize(page, size)
-	total := roleController.roleService.CountAllRoles()
-
-	c.JSON(http.StatusOK, gin.H{
-		"roles": roles,
-		"page":  page,
-		"size":  size,
-		"total": total,
-		"query": query,
-	})
+	c.JSON(http.StatusOK, response)
 }
