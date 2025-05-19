@@ -1,4 +1,4 @@
-module UserService
+module github.com/ruiborda/ecommerce-user-service
 
 go 1.24
 

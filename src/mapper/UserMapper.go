@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"UserService/src/dto/user"
-	"UserService/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"time"
 )
 

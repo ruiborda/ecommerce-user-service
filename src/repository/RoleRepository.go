@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"UserService/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 )
 
 type RoleRepository interface {
@@ -13,5 +13,5 @@ type RoleRepository interface {
 	Delete(id string) error
 	FindAllByPageAndSize(page, size int) ([]*model.Role, error)
 	Count() (int64, error)
-	FindByIds(ids []string) ([]model.Role, error)
+	FindByIds(ids []string) ([]*model.Role, error)
 }

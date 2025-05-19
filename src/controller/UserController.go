@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"UserService/src/dto/user"
-	"UserService/src/service"
-	"UserService/src/service/impl"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
+	"github.com/ruiborda/ecommerce-user-service/src/service"
+	"github.com/ruiborda/ecommerce-user-service/src/service/impl"
 	"net/http"
 	"strconv"
 

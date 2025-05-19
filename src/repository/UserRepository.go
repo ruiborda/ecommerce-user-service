@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"UserService/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 )
 
 type UserRepository interface {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	router2 "UserService/src/router"
 	"github.com/gin-gonic/gin"
+	router2 "github.com/ruiborda/ecommerce-user-service/src/router"
 	"github.com/ruiborda/go-swagger-generator/src/middleware"
 	"log/slog"
 	"os"

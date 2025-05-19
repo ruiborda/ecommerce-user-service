@@ -1,16 +1,17 @@
 package impl
 
 import (
-	"UserService/src/database"
-	"UserService/src/model"
-	"cloud.google.com/go/firestore"
 	"context"
 	"fmt"
+	"github.com/ruiborda/ecommerce-user-service/src/database"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
+	"time"
+
+	"cloud.google.com/go/firestore"
 	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 type UserRepositoryImpl struct {
@@ -28,8 +29,17 @@ func (r *UserRepositoryImpl) Create(user *model.User) (*model.User, error) {
 	client := database.GetFirestoreClient()
 
 	if user.Id == "" {
-		user.Id = uuid.New().String()
 		// Guardar el documento con el ID generado
+		user.Id = uuid.New().String()
+
+		// Set creation timestamp if not set
+		if user.CreatedAt.IsZero() {
+			user.CreatedAt = time.Now()
+		}
+		if user.UpdatedAt.IsZero() {
+			user.UpdatedAt = time.Now()
+		}
+
 		_, err := client.Collection(r.collectionName).Doc(user.Id).Set(ctx, user)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create user with generated UUID: %v", err)

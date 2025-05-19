@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"UserService/src/dto/auth"
 	"github.com/gin-gonic/gin"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/auth"
 	"github.com/ruiborda/go-jwt/src/application/ports/input"
 	"github.com/ruiborda/go-jwt/src/domain/entity"
 	input2 "github.com/ruiborda/go-jwt/src/infrastructure/adapters/input"

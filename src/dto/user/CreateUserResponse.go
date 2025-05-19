@@ -1,7 +1,7 @@
 package user
 
 import (
-	"UserService/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"time"
 )
 

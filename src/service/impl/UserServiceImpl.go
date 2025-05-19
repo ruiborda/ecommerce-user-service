@@ -1,12 +1,13 @@
 package impl
 
 import (
-	"UserService/src/dto/user"
-	"UserService/src/mapper"
-	"UserService/src/model"
-	"UserService/src/repository"
-	"UserService/src/repository/impl"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
+	"github.com/ruiborda/ecommerce-user-service/src/mapper"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/repository"
+	"github.com/ruiborda/ecommerce-user-service/src/repository/impl"
 	"log"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,10 +28,10 @@ func NewUserServiceImpl() *UserServiceImpl {
 	}
 }
 
-// CreateUser creates a new user
+// CreateUser crea un nuevo usuario
 func (s *UserServiceImpl) CreateUser(request *user.CreateUserRequest) *user.CreateUserResponse {
 	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Error hashing password: %v", err)
 		return nil
@@ -38,35 +39,43 @@ func (s *UserServiceImpl) CreateUser(request *user.CreateUserRequest) *user.Crea
 
 	// Map request to model
 	userModel := s.userMapper.CreateUserRequestToUser(request)
-	userModel.PasswordHash = string(hashedPassword)
+	userModel.PasswordHash = string(passwordHash)
 
-	// Save to repository
+	// Save to database
 	createdUser, err := s.userRepository.Create(userModel)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
 		return nil
 	}
 
-	// Get roles if roleIds are provided
-	var roles *[]model.Role
+	// Get roles for response
+	var roleSlice []*model.Role
 	if len(createdUser.RoleIds) > 0 {
-		rolesData, err := s.roleRepository.FindByIds(createdUser.RoleIds)
+		roleModels, err := s.roleRepository.FindByIds(createdUser.RoleIds)
 		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		} else {
-			roles = &rolesData
+			roleSlice = roleModels
 		}
 	}
 
-	// Map created user to response
-	return s.userMapper.UserToCreateUserResponse(createdUser, roles)
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var roles []model.Role
+	for _, rolePtr := range roleSlice {
+		if rolePtr != nil {
+			roles = append(roles, *rolePtr)
+		}
+	}
+
+	// Map model to response
+	return s.userMapper.UserToCreateUserResponse(createdUser, &roles)
 }
 
-// GetUserById retrieves a user by their ID
+// GetUserById obtiene un usuario por su ID
 func (s *UserServiceImpl) GetUserById(id string) *user.GetUserByIdResponse {
 	userModel, err := s.userRepository.FindById(id)
 	if err != nil {
-		log.Printf("Error getting user by ID: %v", err)
+		log.Printf("Error fetching user by ID: %v", err)
 		return nil
 	}
 
@@ -74,25 +83,33 @@ func (s *UserServiceImpl) GetUserById(id string) *user.GetUserByIdResponse {
 		return nil
 	}
 
-	// Get roles if roleIds are provided
-	var roles *[]model.Role
+	// Get roles for response
+	var roleSlice []*model.Role
 	if len(userModel.RoleIds) > 0 {
-		rolesData, err := s.roleRepository.FindByIds(userModel.RoleIds)
+		roleModels, err := s.roleRepository.FindByIds(userModel.RoleIds)
 		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		} else {
-			roles = &rolesData
+			roleSlice = roleModels
 		}
 	}
 
-	return s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var roles []model.Role
+	for _, rolePtr := range roleSlice {
+		if rolePtr != nil {
+			roles = append(roles, *rolePtr)
+		}
+	}
+
+	return s.userMapper.UserToGetUserByIdResponse(userModel, &roles)
 }
 
-// GetUserByEmail retrieves a user by their email
+// GetUserByEmail obtiene un usuario por su email
 func (s *UserServiceImpl) GetUserByEmail(email string) *user.GetUserByIdResponse {
 	userModel, err := s.userRepository.FindByEmail(email)
 	if err != nil {
-		log.Printf("Error getting user by email: %v", err)
+		log.Printf("Error fetching user by email: %v", err)
 		return nil
 	}
 
@@ -100,276 +117,408 @@ func (s *UserServiceImpl) GetUserByEmail(email string) *user.GetUserByIdResponse
 		return nil
 	}
 
-	// Get roles if roleIds are provided
-	var roles *[]model.Role
+	// Get roles for response
+	var roleSlice []*model.Role
 	if len(userModel.RoleIds) > 0 {
-		rolesData, err := s.roleRepository.FindByIds(userModel.RoleIds)
+		roleModels, err := s.roleRepository.FindByIds(userModel.RoleIds)
 		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		} else {
-			roles = &rolesData
+			roleSlice = roleModels
 		}
 	}
 
-	return s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var roles []model.Role
+	for _, rolePtr := range roleSlice {
+		if rolePtr != nil {
+			roles = append(roles, *rolePtr)
+		}
+	}
+
+	return s.userMapper.UserToGetUserByIdResponse(userModel, &roles)
 }
 
-// GetAllUsers retrieves all users
+// GetAllUsers obtiene todos los usuarios
 func (s *UserServiceImpl) GetAllUsers() []*user.GetUserByIdResponse {
 	users, err := s.userRepository.FindAll()
 	if err != nil {
-		log.Printf("Error getting all users: %v", err)
-		return []*user.GetUserByIdResponse{} // Devolver un array vacío en lugar de nil
+		log.Printf("Error fetching all users: %v", err)
+		return nil
 	}
 
-	// Si users es nil, devolver un array vacío
-	if users == nil {
-		return []*user.GetUserByIdResponse{}
-	}
-
-	// Create a map to store roles for each user
+	// Create map to store roles for each user
 	rolesMap := make(map[string]*[]model.Role)
 
-	// Collect all role IDs from all users
+	// Pre-fetch roles for all users
 	var allRoleIds []string
 	for _, user := range users {
-		for _, roleId := range user.RoleIds {
-			allRoleIds = append(allRoleIds, roleId)
+		allRoleIds = append(allRoleIds, user.RoleIds...)
+	}
+
+	// Deduplicate role IDs
+	uniqueRoleIds := make(map[string]bool)
+	var uniqueRoleIdsSlice []string
+	for _, roleId := range allRoleIds {
+		if !uniqueRoleIds[roleId] {
+			uniqueRoleIds[roleId] = true
+			uniqueRoleIdsSlice = append(uniqueRoleIdsSlice, roleId)
 		}
 	}
 
-	// Fetch all roles at once (to minimize database calls)
-	if len(allRoleIds) > 0 {
-		allRoles, err := s.roleRepository.FindByIds(allRoleIds)
-		if err == nil {
-			// Create a map of role ID to role for easy lookup
-			roleById := make(map[string]model.Role)
-			for _, role := range allRoles {
-				roleById[role.Id] = role
-			}
-
-			// Associate roles with each user
-			for _, user := range users {
-				var userRoles []model.Role
-				for _, roleId := range user.RoleIds {
-					if role, exists := roleById[roleId]; exists {
-						userRoles = append(userRoles, role)
-					}
-				}
-				if len(userRoles) > 0 {
-					rolesMap[user.Id] = &userRoles
-				}
-			}
-		} else {
+	// Fetch all needed roles in one go
+	var allRolesPtr []*model.Role
+	if len(uniqueRoleIdsSlice) > 0 {
+		allRolesPtr, err = s.roleRepository.FindByIds(uniqueRoleIdsSlice)
+		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		}
 	}
 
-	// Usar el nuevo método de mapper
-	response := s.userMapper.UsersToGetUsersByIdsResponse(users, rolesMap)
-
-	// Si response.Users es nil, devolver un array vacío
-	if response.Users == nil {
-		return []*user.GetUserByIdResponse{}
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var allRoles []model.Role
+	for _, rolePtr := range allRolesPtr {
+		if rolePtr != nil {
+			allRoles = append(allRoles, *rolePtr)
+		}
 	}
 
-	return response.Users
+	// Create mapping of role ID to role
+	roleById := make(map[string]model.Role)
+	for _, role := range allRoles {
+		roleById[role.Id] = role
+	}
+
+	// Map each user's roles
+	for _, userModel := range users {
+		var userRoles []model.Role
+		for _, roleId := range userModel.RoleIds {
+			if role, ok := roleById[roleId]; ok {
+				userRoles = append(userRoles, role)
+			}
+		}
+		rolesMap[userModel.Id] = &userRoles
+	}
+
+	// Convert users to DTOs
+	var userResponses []*user.GetUserByIdResponse
+	for _, userModel := range users {
+		roles := rolesMap[userModel.Id]
+		if roles == nil {
+			emptyRoles := []model.Role{}
+			roles = &emptyRoles
+		}
+		userDto := s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+		userResponses = append(userResponses, userDto)
+	}
+
+	return userResponses
 }
 
-// UpdateUserById updates an existing user
+// UpdateUserById actualiza un usuario existente
 func (s *UserServiceImpl) UpdateUserById(request *user.UpdateUserRequest) *user.UpdateUserResponse {
-	// First get the existing user
+	// First get existing user
 	existingUser, err := s.userRepository.FindById(request.Id)
 	if err != nil {
-		log.Printf("Error finding user to update: %v", err)
+		log.Printf("Error fetching user to update: %v", err)
 		return nil
 	}
 
 	if existingUser == nil {
-		log.Printf("User not found with ID: %s", request.Id)
 		return nil
 	}
 
-	// Hash the password if provided
+	// Check if password needs to be updated
 	if request.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 		if err != nil {
 			log.Printf("Error hashing password: %v", err)
 			return nil
 		}
-		request.Password = string(hashedPassword)
+		request.Password = string(passwordHash)
 	}
 
-	// Update the user model with request data
+	// Map request to model
 	updatedUserModel := s.userMapper.UpdateUserRequestToUser(request, existingUser)
 
-	// Save the updated user
-	savedUser, err := s.userRepository.Update(updatedUserModel)
+	// Save to database
+	updatedUser, err := s.userRepository.Update(updatedUserModel)
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		return nil
 	}
 
-	// Get roles if roleIds are provided
-	var roles *[]model.Role
-	if len(savedUser.RoleIds) > 0 {
-		rolesData, err := s.roleRepository.FindByIds(savedUser.RoleIds)
+	// Get roles for response
+	var roleSlice []*model.Role
+	if len(updatedUser.RoleIds) > 0 {
+		roleModels, err := s.roleRepository.FindByIds(updatedUser.RoleIds)
 		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		} else {
-			roles = &rolesData
+			roleSlice = roleModels
 		}
 	}
 
-	return s.userMapper.UserToUpdateUserResponse(savedUser, roles)
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var roles []model.Role
+	for _, rolePtr := range roleSlice {
+		if rolePtr != nil {
+			roles = append(roles, *rolePtr)
+		}
+	}
+
+	// Map model to response
+	return s.userMapper.UserToUpdateUserResponse(updatedUser, &roles)
 }
 
-// DeleteUserById deletes a user by their ID
+// DeleteUserById elimina un usuario por su ID
 func (s *UserServiceImpl) DeleteUserById(id string) *user.DeleteUserByIdResponse {
 	err := s.userRepository.Delete(id)
 	success := err == nil
 
-	// Create the response using the mapper regardless of success or failure
-	response := s.userMapper.UserToDeleteUserByIdResponse(id, success)
-
-	if err != nil {
-		log.Printf("Error deleting user: %v", err)
-		// Return response with success=false
-	}
-
-	return response
+	return s.userMapper.UserToDeleteUserByIdResponse(id, success)
 }
 
-// FindAllUsersByPageAndSize retrieves users with pagination
+// FindAllUsersByPageAndSize obtiene usuarios paginados
 func (s *UserServiceImpl) FindAllUsersByPageAndSize(page, size int) []*user.GetUserByIdResponse {
 	users, err := s.userRepository.FindAllByPageAndSize(page, size)
 	if err != nil {
-		log.Printf("Error getting paginated users: %v", err)
-		return []*user.GetUserByIdResponse{} // Devolver un array vacío en lugar de nil
+		log.Printf("Error fetching paginated users: %v", err)
+		return nil
 	}
 
-	// Si users es nil, devolver un array vacío
-	if users == nil {
-		return []*user.GetUserByIdResponse{}
-	}
-
-	// Create a map to store roles for each user
+	// Create map to store roles for each user
 	rolesMap := make(map[string]*[]model.Role)
 
-	// Collect all role IDs from all users
+	// Collect all role IDs
 	var allRoleIds []string
-	for _, user := range users {
-		for _, roleId := range user.RoleIds {
-			allRoleIds = append(allRoleIds, roleId)
+	for _, userModel := range users {
+		allRoleIds = append(allRoleIds, userModel.RoleIds...)
+	}
+
+	// Deduplicate role IDs
+	uniqueRoleIds := make(map[string]bool)
+	var uniqueRoleIdsSlice []string
+	for _, roleId := range allRoleIds {
+		if !uniqueRoleIds[roleId] {
+			uniqueRoleIds[roleId] = true
+			uniqueRoleIdsSlice = append(uniqueRoleIdsSlice, roleId)
 		}
 	}
 
-	// Fetch all roles at once (to minimize database calls)
-	if len(allRoleIds) > 0 {
-		allRoles, err := s.roleRepository.FindByIds(allRoleIds)
-		if err == nil {
-			// Create a map of role ID to role for easy lookup
-			roleById := make(map[string]model.Role)
-			for _, role := range allRoles {
-				roleById[role.Id] = role
-			}
-
-			// Associate roles with each user
-			for _, user := range users {
-				var userRoles []model.Role
-				for _, roleId := range user.RoleIds {
-					if role, exists := roleById[roleId]; exists {
-						userRoles = append(userRoles, role)
-					}
-				}
-				if len(userRoles) > 0 {
-					rolesMap[user.Id] = &userRoles
-				}
-			}
-		} else {
+	// Fetch all needed roles in one go
+	var allRolesPtr []*model.Role
+	if len(uniqueRoleIdsSlice) > 0 {
+		allRolesPtr, err = s.roleRepository.FindByIds(uniqueRoleIdsSlice)
+		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		}
 	}
 
-	// Usar el nuevo método de mapper
-	response := s.userMapper.UsersToGetUsersByIdsResponse(users, rolesMap)
-
-	// Si response.Users es nil, devolver un array vacío
-	if response.Users == nil {
-		return []*user.GetUserByIdResponse{}
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var allRoles []model.Role
+	for _, rolePtr := range allRolesPtr {
+		if rolePtr != nil {
+			allRoles = append(allRoles, *rolePtr)
+		}
 	}
 
-	return response.Users
+	// Create mapping of role ID to role
+	roleById := make(map[string]model.Role)
+	for _, role := range allRoles {
+		roleById[role.Id] = role
+	}
+
+	// Map each user's roles
+	for _, userModel := range users {
+		var userRoles []model.Role
+		for _, roleId := range userModel.RoleIds {
+			if role, ok := roleById[roleId]; ok {
+				userRoles = append(userRoles, role)
+			}
+		}
+		rolesMap[userModel.Id] = &userRoles
+	}
+
+	// Convert users to DTOs
+	var userResponses []*user.GetUserByIdResponse
+	for _, userModel := range users {
+		roles := rolesMap[userModel.Id]
+		if roles == nil {
+			emptyRoles := []model.Role{}
+			roles = &emptyRoles
+		}
+		userDto := s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+		userResponses = append(userResponses, userDto)
+	}
+
+	return userResponses
 }
 
-// CountAllUsers gets the total count of users
+// CountAllUsers cuenta el número total de usuarios
 func (s *UserServiceImpl) CountAllUsers() int64 {
 	count, err := s.userRepository.Count()
 	if err != nil {
 		log.Printf("Error counting users: %v", err)
 		return 0
 	}
+
 	return count
 }
 
-// GetUsersByIds retrieves users by a slice of IDs
+// GetUsersByIds obtiene múltiples usuarios por sus IDs
 func (s *UserServiceImpl) GetUsersByIds(ids []string) []*user.GetUserByIdResponse {
 	users, err := s.userRepository.FindByIds(ids)
 	if err != nil {
-		log.Printf("Error getting users by IDs: %v", err)
-		return []*user.GetUserByIdResponse{} // Devolver un array vacío en lugar de nil
+		log.Printf("Error fetching users by IDs: %v", err)
+		return nil
 	}
 
-	// Si users es nil, devolver un array vacío
-	if users == nil {
-		return []*user.GetUserByIdResponse{}
-	}
-
-	// Create a map to store roles for each user
+	// Create map to store roles for each user
 	rolesMap := make(map[string]*[]model.Role)
 
-	// Collect all role IDs from all users
+	// Collect all role IDs
 	var allRoleIds []string
-	for _, user := range users {
-		for _, roleId := range user.RoleIds {
-			allRoleIds = append(allRoleIds, roleId)
+	for _, userModel := range users {
+		allRoleIds = append(allRoleIds, userModel.RoleIds...)
+	}
+
+	// Deduplicate role IDs
+	uniqueRoleIds := make(map[string]bool)
+	var uniqueRoleIdsSlice []string
+	for _, roleId := range allRoleIds {
+		if !uniqueRoleIds[roleId] {
+			uniqueRoleIds[roleId] = true
+			uniqueRoleIdsSlice = append(uniqueRoleIdsSlice, roleId)
 		}
 	}
 
-	// Fetch all roles at once (to minimize database calls)
-	if len(allRoleIds) > 0 {
-		allRoles, err := s.roleRepository.FindByIds(allRoleIds)
-		if err == nil {
-			// Create a map of role ID to role for easy lookup
-			roleById := make(map[string]model.Role)
-			for _, role := range allRoles {
-				roleById[role.Id] = role
-			}
-
-			// Associate roles with each user
-			for _, user := range users {
-				var userRoles []model.Role
-				for _, roleId := range user.RoleIds {
-					if role, exists := roleById[roleId]; exists {
-						userRoles = append(userRoles, role)
-					}
-				}
-				if len(userRoles) > 0 {
-					rolesMap[user.Id] = &userRoles
-				}
-			}
-		} else {
+	// Fetch all needed roles in one go
+	var allRolesPtr []*model.Role
+	if len(uniqueRoleIdsSlice) > 0 {
+		allRolesPtr, err = s.roleRepository.FindByIds(uniqueRoleIdsSlice)
+		if err != nil {
 			log.Printf("Error fetching roles: %v", err)
 		}
 	}
 
-	// Usar el nuevo método de mapper
-	response := s.userMapper.UsersToGetUsersByIdsResponse(users, rolesMap)
-
-	// Si response.Users es nil, devolver un array vacío
-	if response.Users == nil {
-		return []*user.GetUserByIdResponse{}
+	// Convert []*model.Role to []model.Role for backward compatibility
+	var allRoles []model.Role
+	for _, rolePtr := range allRolesPtr {
+		if rolePtr != nil {
+			allRoles = append(allRoles, *rolePtr)
+		}
 	}
 
-	return response.Users
+	// Create mapping of role ID to role
+	roleById := make(map[string]model.Role)
+	for _, role := range allRoles {
+		roleById[role.Id] = role
+	}
+
+	// Map each user's roles
+	for _, userModel := range users {
+		var userRoles []model.Role
+		for _, roleId := range userModel.RoleIds {
+			if role, ok := roleById[roleId]; ok {
+				userRoles = append(userRoles, role)
+			}
+		}
+		rolesMap[userModel.Id] = &userRoles
+	}
+
+	// Convert the users to individual responses
+	var userResponses []*user.GetUserByIdResponse
+	for _, userModel := range users {
+		roles := rolesMap[userModel.Id]
+		if roles == nil {
+			emptyRoles := []model.Role{}
+			roles = &emptyRoles
+		}
+		userDto := s.userMapper.UserToGetUserByIdResponse(userModel, roles)
+		userResponses = append(userResponses, userDto)
+	}
+
+	return userResponses
+}
+
+// Helper methods for authentication
+// These methods are used by AuthServiceImpl
+
+// GetRolesForUser returns the roles for a given user
+func (s *UserServiceImpl) GetRolesForUser(user *model.User) *[]model.Role {
+	if len(user.RoleIds) == 0 {
+		emptyRoles := []model.Role{}
+		return &emptyRoles
+	}
+
+	roleModelsPtr, err := s.roleRepository.FindByIds(user.RoleIds)
+	if err != nil {
+		log.Printf("Error fetching roles for user: %v", err)
+		emptyRoles := []model.Role{}
+		return &emptyRoles
+	}
+
+	// Convert []*model.Role to []model.Role
+	var roleModels []model.Role
+	for _, rolePtr := range roleModelsPtr {
+		if rolePtr != nil {
+			roleModels = append(roleModels, *rolePtr)
+		}
+	}
+
+	return &roleModels
+}
+
+// VerifyPassword checks if a password matches the hash
+func (s *UserServiceImpl) VerifyPassword(user *model.User, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	return err == nil
+}
+
+// SetPasswordHash hashes and sets a password for a user
+func (s *UserServiceImpl) SetPasswordHash(user *model.User, password string) error {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(passwordHash)
+	return nil
+}
+
+// CreateUserWithRoleAndAuth creates a new user with specified roles
+func (s *UserServiceImpl) CreateUserWithRoleAndAuth(email, fullName, password string, roleIds []string) (*model.User, error) {
+	// Check if user already exists
+	existingUser, err := s.userRepository.FindByEmail(email)
+	if err == nil && existingUser != nil {
+		return nil, nil // User already exists
+	}
+
+	// Create new user
+	now := time.Now()
+	userModel := &model.User{
+		Email:                  email,
+		FullName:               fullName,
+		CreatedAt:              now,
+		UpdatedAt:              now,
+		RoleIds:                roleIds,
+		FavoriteNewsArticleIds: []string{},
+	}
+
+	// Set password if provided
+	if password != "" {
+		err = s.SetPasswordHash(userModel, password)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Save to database
+	createdUser, err := s.userRepository.Create(userModel)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdUser, nil
 }

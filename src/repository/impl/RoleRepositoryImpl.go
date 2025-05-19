@@ -1,12 +1,13 @@
+// filepath: /home/rui/ecommerce/UserService/src/repository/impl/RoleRepositoryImpl.go
 package impl
 
 import (
-	"UserService/src/database"
-	"UserService/src/model"
 	"cloud.google.com/go/firestore"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/ruiborda/ecommerce-user-service/src/database"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +30,7 @@ func (r *RoleRepositoryImpl) Create(role *model.Role) (*model.Role, error) {
 	if role.Id == "" {
 		// Generar UUID para nuevos roles
 		role.Id = uuid.New().String()
-		
+
 		// Guardar el documento con el ID generado
 		_, err := client.Collection(r.collectionName).Doc(role.Id).Set(ctx, role)
 		if err != nil {
@@ -40,7 +41,7 @@ func (r *RoleRepositoryImpl) Create(role *model.Role) (*model.Role, error) {
 		if _, err := uuid.Parse(role.Id); err != nil {
 			return nil, fmt.Errorf("invalid UUID format for role ID: %v", err)
 		}
-		
+
 		_, err := client.Collection(r.collectionName).Doc(role.Id).Set(ctx, role)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create role with provided ID: %v", err)
@@ -162,6 +163,7 @@ func (r *RoleRepositoryImpl) FindAllByPageAndSize(page, size int) ([]*model.Role
 	offset := page * size
 
 	// Get all documents and apply pagination in memory
+	// Note: Firestore doesn't natively support offset-based pagination
 	iter := client.Collection(r.collectionName).OrderBy("code", firestore.Asc).Documents(ctx)
 	defer iter.Stop()
 
@@ -206,6 +208,7 @@ func (r *RoleRepositoryImpl) Count() (int64, error) {
 	client := database.GetFirestoreClient()
 
 	// Firestore doesn't provide a direct count operation
+	// We need to iterate through all documents
 	iter := client.Collection(r.collectionName).Documents(ctx)
 	defer iter.Stop()
 
@@ -224,11 +227,11 @@ func (r *RoleRepositoryImpl) Count() (int64, error) {
 	return count, nil
 }
 
-func (r *RoleRepositoryImpl) FindByIds(ids []string) ([]model.Role, error) {
+func (r *RoleRepositoryImpl) FindByIds(ids []string) ([]*model.Role, error) {
 	ctx := context.Background()
 	client := database.GetFirestoreClient()
 
-	var roles []model.Role
+	var roles []*model.Role
 
 	// Fetch each role by ID
 	for _, id := range ids {
@@ -248,7 +251,7 @@ func (r *RoleRepositoryImpl) FindByIds(ids []string) ([]model.Role, error) {
 
 		// Ensure the ID is set
 		role.Id = doc.Ref.ID
-		roles = append(roles, role)
+		roles = append(roles, &role)
 	}
 
 	return roles, nil

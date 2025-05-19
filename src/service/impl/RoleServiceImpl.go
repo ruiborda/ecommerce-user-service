@@ -1,10 +1,11 @@
+// filepath: /home/rui/ecommerce/UserService/src/service/impl/RoleServiceImpl.go
 package impl
 
 import (
-	"UserService/src/dto/role"
-	"UserService/src/mapper"
-	"UserService/src/repository"
-	"UserService/src/repository/impl"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
+	"github.com/ruiborda/ecommerce-user-service/src/mapper"
+	"github.com/ruiborda/ecommerce-user-service/src/repository"
+	"github.com/ruiborda/ecommerce-user-service/src/repository/impl"
 	"log"
 )
 
@@ -37,7 +38,7 @@ func (s *RoleServiceImpl) CreateRole(request *role.CreateRoleRequest) *role.Crea
 }
 
 // GetRoleById obtiene un rol por su ID
-func (s *RoleServiceImpl) GetRoleById(id string) *role.CreateRoleResponse {
+func (s *RoleServiceImpl) GetRoleById(id string) *role.GetRoleByIdResponse {
 	roleModel, err := s.roleRepository.FindById(id)
 	if err != nil {
 		log.Printf("Error getting role by ID: %v", err)
@@ -52,7 +53,7 @@ func (s *RoleServiceImpl) GetRoleById(id string) *role.CreateRoleResponse {
 }
 
 // GetAllRoles obtiene todos los roles
-func (s *RoleServiceImpl) GetAllRoles() []*role.CreateRoleResponse {
+func (s *RoleServiceImpl) GetAllRoles() []*role.GetRoleByIdResponse {
 	roles, err := s.roleRepository.FindAll()
 	if err != nil {
 		log.Printf("Error getting all roles: %v", err)
@@ -98,4 +99,37 @@ func (s *RoleServiceImpl) DeleteRoleById(id string) *role.DeleteRoleByIdResponse
 	}
 
 	return s.roleMapper.RoleToDeleteRoleByIdResponse(id, true)
+}
+
+// FindAllRolesByPageAndSize obtiene roles paginados
+func (s *RoleServiceImpl) FindAllRolesByPageAndSize(page, size int) []*role.GetRoleByIdResponse {
+	roles, err := s.roleRepository.FindAllByPageAndSize(page, size)
+	if err != nil {
+		log.Printf("Error fetching paginated roles: %v", err)
+		return nil
+	}
+
+	return s.roleMapper.RolesToGetRolesResponse(roles)
+}
+
+// CountAllRoles cuenta el número total de roles
+func (s *RoleServiceImpl) CountAllRoles() int64 {
+	count, err := s.roleRepository.Count()
+	if err != nil {
+		log.Printf("Error counting roles: %v", err)
+		return 0
+	}
+
+	return count
+}
+
+// GetRolesByIds obtiene múltiples roles por sus IDs
+func (s *RoleServiceImpl) GetRolesByIds(ids []string) []*role.GetRoleByIdResponse {
+	roles, err := s.roleRepository.FindByIds(ids)
+	if err != nil {
+		log.Printf("Error fetching roles by IDs: %v", err)
+		return nil
+	}
+
+	return s.roleMapper.RolesToGetRolesResponse(roles)
 }

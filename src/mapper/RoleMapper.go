@@ -1,8 +1,9 @@
+// filepath: /home/rui/ecommerce/UserService/src/mapper/RoleMapper.go
 package mapper
 
 import (
-	"UserService/src/dto/role"
-	"UserService/src/model"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 )
 
 type RoleMapper struct {
@@ -28,11 +29,9 @@ func (m *RoleMapper) RoleToCreateRoleResponse(model *model.Role) *role.CreateRol
 	}
 }
 
-// GetRoleByIdRequestToRole (no es necesario, ya que es solo un ID)
-
 // RoleToGetRoleByIdResponse convierte un modelo Role a un GetRoleByIdResponse
-func (m *RoleMapper) RoleToGetRoleByIdResponse(model *model.Role) *role.CreateRoleResponse {
-	return &role.CreateRoleResponse{
+func (m *RoleMapper) RoleToGetRoleByIdResponse(model *model.Role) *role.GetRoleByIdResponse {
+	return &role.GetRoleByIdResponse{
 		Id:          model.Id,
 		Code:        model.Code,
 		Permissions: model.Permissions,
@@ -60,8 +59,6 @@ func (m *RoleMapper) RoleToUpdateRoleResponse(model *model.Role) *role.UpdateRol
 	}
 }
 
-// DeleteRoleByIdRequestToRole (no es necesario, ya que es solo un ID)
-
 // RoleToDeleteRoleByIdResponse convierte un resultado de eliminación a un DeleteRoleByIdResponse
 func (m *RoleMapper) RoleToDeleteRoleByIdResponse(roleId string, success bool) *role.DeleteRoleByIdResponse {
 	return &role.DeleteRoleByIdResponse{
@@ -78,12 +75,12 @@ func getDeleteRoleMessage(roleId string, success bool) string {
 	return "Failed to delete role with ID " + roleId
 }
 
-// RolesToGetRolesResponse convierte una lista de modelos Role a una lista de respuestas DTO
-func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.CreateRoleResponse {
-	var responses []*role.CreateRoleResponse
+// RolesToGetRolesResponse convierte una lista de modelos Role a una lista de GetRoleByIdResponse
+func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.GetRoleByIdResponse {
+	var responses []*role.GetRoleByIdResponse
 
 	for _, model := range models {
-		response := &role.CreateRoleResponse{
+		response := &role.GetRoleByIdResponse{
 			Id:          model.Id,
 			Code:        model.Code,
 			Permissions: model.Permissions,
@@ -93,4 +90,12 @@ func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.Creat
 	}
 
 	return responses
+}
+
+// RolesToGetRolesByIdsResponse convierte una lista de modelos Role a una respuesta GetRolesByIdsResponse
+func (m *RoleMapper) RolesToGetRolesByIdsResponse(models []*model.Role) *role.GetRolesByIdsResponse {
+	roleResponses := m.RolesToGetRolesResponse(models)
+	return &role.GetRolesByIdsResponse{
+		Roles: roleResponses,
+	}
 }

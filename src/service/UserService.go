@@ -1,7 +1,7 @@
 package service
 
 import (
-	"UserService/src/dto/user"
+	"github.com/ruiborda/ecommerce-user-service/src/dto/user"
 )
 
 type UserService interface {

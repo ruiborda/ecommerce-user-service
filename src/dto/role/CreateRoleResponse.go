@@ -1,6 +1,6 @@
 package role
 
-import "UserService/src/model"
+import "github.com/ruiborda/ecommerce-user-service/src/model"
 
 type CreateRoleResponse struct {
 	Id          string              `json:"id"`
