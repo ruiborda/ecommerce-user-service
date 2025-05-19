@@ -21,7 +21,7 @@ func NewAuthController() *AuthController {
 	}
 }
 
-var _ = swagger.Swagger().Path("/v1/auth/login/google").
+var _ = swagger.Swagger().Path("/api/v1/auth/login/google").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Login or signup with Google OAuth").
 			OperationID("LoginWithGoogle").
@@ -56,7 +56,7 @@ func (authController *AuthController) LoginWithGoogle(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/auth/login/email").
+var _ = swagger.Swagger().Path("/api/v1/auth/login/email").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Login with email and password").
 			OperationID("LoginWithEmail").

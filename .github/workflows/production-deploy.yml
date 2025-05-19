@@ -1,0 +1,62 @@
+name: Ver versión del CLI de Google Cloud
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check_gcloud_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
+
+      - name: Autenticación con Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: Configurar Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: 'latest'
+
+      - name: Verificar versión del CLI de gcloud
+        run: gcloud --version
+
+      - name: Verificar versión de Docker
+        run: docker --version
+
+      - name: Configurando proyecto de Google Cloud
+        run: gcloud config set project ${{ secrets.PROJECT_ID }}
+
+      - name: Construyendo imagen Docker
+        run: docker build -t ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY_NAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }} -f ${{ secrets.DOCKERFILE }} .
+
+      - name: Autenticando Docker en Google Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.REGION }}-docker.pkg.dev
+
+      - name: Subiendo imagen a Google Artifact Registry
+        run: docker push ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY_NAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
+
+      - name: Verificar imagen en Google Artifact Registry
+        run: gcloud artifacts docker images list ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY_NAME }}
+
+      - name: Desplegar en Cloud Run
+        run: |
+          gcloud run deploy ${{ secrets.IMAGE_NAME }} \
+          --image=${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY_NAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }} \
+          --set-env-vars=JWT_SECRET="${{ secrets.JWT_SECRET }}",GIN_MODE=release,GCP_CREDENTIAL_JSON_BASE64="$(echo -n '${{ secrets.GOOGLE_CREDENTIALS }}' | base64 -w 0)" \
+          --allow-unauthenticated \
+          --port=8080 \
+          --service-account=${{ secrets.SERVICE_ACCOUNT }} \
+          --concurrency=1000 \
+          --timeout=10 \
+          --memory=128Mi \
+          --max-instances=1 \
+          --execution-environment=gen1 \
+          --no-cpu-boost \
+          --region=${{ secrets.REGION }} \
+          --project=${{ secrets.PROJECT_ID }}

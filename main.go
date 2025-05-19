@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	router2 "github.com/ruiborda/ecommerce-user-service/src/router"
+	router2 "github.com/ruiborda/ecommerce-user-service/src/route"
 	"github.com/ruiborda/go-swagger-generator/src/middleware"
 	"log/slog"
 	"os"

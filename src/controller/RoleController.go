@@ -25,7 +25,7 @@ func NewRoleController() *RoleController {
 	}
 }
 
-var _ = swagger.Swagger().Path("/v1/roles").
+var _ = swagger.Swagger().Path("/api/v1/roles").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Create a new role").
 			OperationID("CreateRole").
@@ -67,7 +67,7 @@ func (roleController *RoleController) CreateRole(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/roles/{id}").
+var _ = swagger.Swagger().Path("/api/v1/roles/{id}").
 	Get(func(operation openapi.Operation) {
 		operation.Summary("Get role by ID").
 			OperationID("GetRoleByID").
@@ -108,7 +108,7 @@ func (roleController *RoleController) GetRoleByID(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/roles/{id}").
+var _ = swagger.Swagger().Path("/api/v1/roles/{id}").
 	Delete(func(operation openapi.Operation) {
 		operation.Summary("Delete a role").
 			OperationID("DeleteRole").
@@ -151,7 +151,7 @@ func (roleController *RoleController) DeleteRole(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Role deleted successfully"})
 }
 
-var _ = swagger.Swagger().Path("/v1/roles").
+var _ = swagger.Swagger().Path("/api/v1/roles").
 	Put(func(operation openapi.Operation) {
 		operation.Summary("Update an existing role").
 			OperationID("UpdateRole").
@@ -210,7 +210,7 @@ func (roleController *RoleController) UpdateRole(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/roles/pages").
+var _ = swagger.Swagger().Path("/api/v1/roles/pages").
 	Get(func(operation openapi.Operation) {
 		operation.Summary("Get roles with pagination").
 			OperationID("GetAllByPageAndSize").

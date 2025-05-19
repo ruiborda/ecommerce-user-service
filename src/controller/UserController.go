@@ -25,7 +25,7 @@ func NewUserController() *UserController {
 	}
 }
 
-var _ = swagger.Swagger().Path("/v1/users").
+var _ = swagger.Swagger().Path("/api/v1/users").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Create a new user").
 			OperationID("CreateUser").
@@ -50,7 +50,7 @@ func (userController *UserController) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, userController.userService.CreateUser(createUserRequest))
 }
 
-var _ = swagger.Swagger().Path("/v1/users/{id}").
+var _ = swagger.Swagger().Path("/api/v1/users/{id}").
 	Get(func(operation openapi.Operation) {
 		operation.Summary("Get user by ID").
 			OperationID("GetUserById").
@@ -90,38 +90,7 @@ func (userController *UserController) GetUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/users/email/{email}").
-	Get(func(operation openapi.Operation) {
-		operation.Summary("Get user by email").
-			OperationID("GetUserByEmail").
-			Tag("UserController").
-			Produces(mime.ApplicationJSON).
-			PathParameter("email", func(param openapi.Parameter) {
-				param.Description("Email of user to return").
-					Required(true).
-					Type("string")
-			})
-	}).
-	Doc()
-
-func (userController *UserController) GetUserByEmail(c *gin.Context) {
-	email := c.Param("email")
-
-	if email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
-		return
-	}
-
-	response := userController.userService.GetUserByEmail(email)
-	if response == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, response)
-}
-
-var _ = swagger.Swagger().Path("/v1/users").
+var _ = swagger.Swagger().Path("/api/v1/users").
 	Get(func(operation openapi.Operation) {
 		operation.Summary("Get all users").
 			OperationID("GetAllUsers").
@@ -137,7 +106,7 @@ func (userController *UserController) GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, userController.userService.GetAllUsers())
 }
 
-var _ = swagger.Swagger().Path("/v1/users").
+var _ = swagger.Swagger().Path("/api/v1/users").
 	Put(func(operation openapi.Operation) {
 		operation.Summary("Update an existing user").
 			OperationID("UpdateUserById").
@@ -180,7 +149,7 @@ func (userController *UserController) UpdateUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/users/{id}").
+var _ = swagger.Swagger().Path("/api/v1/users/{id}").
 	Delete(func(operation openapi.Operation) {
 		operation.Summary("Delete a user").
 			OperationID("DeleteUserById").
@@ -227,7 +196,7 @@ func (userController *UserController) DeleteUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/v1/users/pages").
+var _ = swagger.Swagger().Path("/api/v1/users/pages").
 	Get(func(operation openapi.Operation) {
 		operation.Summary("Get users with pagination").
 			OperationID("FindAllUsersByPageAndSize").
@@ -270,42 +239,4 @@ func (userController *UserController) FindAllUsersByPageAndSize(c *gin.Context) 
 		"size":  size,
 		"total": userController.userService.CountAllUsers(),
 	})
-}
-
-var _ = swagger.Swagger().Path("/v1/users/by-ids").
-	Post(func(operation openapi.Operation) {
-		operation.Summary("Get users by IDs").
-			OperationID("GetUsersByIds").
-			Tag("UserController").
-			Consume(mime.ApplicationJSON).
-			Produces(mime.ApplicationJSON).
-			QueryParameter("ids", func(p openapi.Parameter) {
-				p.Description("Tags to filter by").
-					Required(true).
-					Type("array").
-					CollectionFormat("multi").
-					Items(func(item openapi.Schema) { item.Type("uuid") })
-			}).
-			Response(http.StatusOK, func(response openapi.Response) {
-				response.Description("List of users").
-					SchemaFromDTO(&[]*user.GetUserByIdResponse{})
-			})
-	}).
-	Doc()
-
-func (userController *UserController) GetUsersByIds(c *gin.Context) {
-	ids := c.QueryArray("ids")
-
-	if len(ids) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "IDs are required"})
-		return
-	}
-
-	users := userController.userService.GetUsersByIds(ids)
-	if users == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No users found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, users)
 }
