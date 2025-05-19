@@ -12,14 +12,15 @@ func ApiRouter(router *gin.Engine) {
 	userController := controller.NewUserController()
 	authController := controller.NewAuthController()
 	roleController := controller.NewRoleController()
+	permissionController := controller.NewPermissionController()
 
 	// Auth routes - these should not be protected as they're for login
 	router.POST(
-		"/api/v1/auth/login/google",
+		"/api/v1/auth/login-with-google",
 		authController.LoginWithGoogle,
 	)
 	router.POST(
-		"/api/v1/auth/login/email",
+		"/api/v1/auth/login-with-email",
 		authController.LoginWithEmail,
 	)
 
@@ -99,5 +100,28 @@ func ApiRouter(router *gin.Engine) {
 		middleware.RequireJWT(),
 		middleware.RequirePermission(model.GetRolesPaginated),
 		roleController.GetAllByPageAndSize,
+	)
+
+	// Permission routes - protected with JWT and specific permissions
+	// Solo rutas de consulta ya que los permisos están en hard code
+	router.GET(
+		"/api/v1/permissions",
+		middleware.RequireJWT(),
+		middleware.RequirePermission(model.GetAllPermissions),
+		permissionController.GetAllPermissions,
+	)
+
+	router.GET(
+		"/api/v1/permissions/:id",
+		middleware.RequireJWT(),
+		middleware.RequirePermission(model.GetPermissionById),
+		permissionController.GetPermissionById,
+	)
+
+	router.POST(
+		"/api/v1/permissions/by-ids",
+		middleware.RequireJWT(),
+		middleware.RequirePermission(model.GetPermissionsByIds),
+		permissionController.GetPermissionsByIds,
 	)
 }

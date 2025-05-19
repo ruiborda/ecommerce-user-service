@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
 	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"github.com/ruiborda/ecommerce-user-service/src/service"
 	"github.com/ruiborda/ecommerce-user-service/src/service/impl"
-	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

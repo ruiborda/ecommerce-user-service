@@ -1,0 +1,3 @@
+package permission
+
+type GetPermissionsByIdsResponse []GetPermissionByIdResponse

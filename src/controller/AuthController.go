@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/auth"
 	"github.com/ruiborda/ecommerce-user-service/src/service"
@@ -8,7 +10,6 @@ import (
 	"github.com/ruiborda/go-swagger-generator/src/openapi"
 	"github.com/ruiborda/go-swagger-generator/src/openapi_spec/mime"
 	"github.com/ruiborda/go-swagger-generator/src/swagger"
-	"net/http"
 )
 
 type AuthController struct {
@@ -21,7 +22,7 @@ func NewAuthController() *AuthController {
 	}
 }
 
-var _ = swagger.Swagger().Path("/api/v1/auth/login/google").
+var _ = swagger.Swagger().Path("/api/v1/login-with-google").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Login or signup with Google OAuth").
 			OperationID("LoginWithGoogle").
@@ -56,7 +57,7 @@ func (authController *AuthController) LoginWithGoogle(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-var _ = swagger.Swagger().Path("/api/v1/auth/login/email").
+var _ = swagger.Swagger().Path("/api/v1/auth/login-with-email").
 	Post(func(operation openapi.Operation) {
 		operation.Summary("Login with email and password").
 			OperationID("LoginWithEmail").
