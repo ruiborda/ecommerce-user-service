@@ -50,17 +50,11 @@ func (roleController *RoleController) CreateRole(c *gin.Context) {
 		return
 	}
 
-	// Validar que hay permisos especificados
-	if len(createRoleRequest.Permissions) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Se requiere al menos un permiso para crear un rol"})
-		return
-	}
-
-	// Obtener permisos usando FindPermissionsByIds
+	// Obtener permisos usando FindPermissionsByIds (si hay permisos solicitados)
 	permissions := model.FindPermissionsByIds(createRoleRequest.Permissions)
 
-	// Validar que todos los permisos solicitados existen
-	if len(*permissions) == 0 || len(*permissions) != len(createRoleRequest.Permissions) {
+	// Validar que todos los permisos solicitados existen (solo si se especificaron permisos)
+	if len(createRoleRequest.Permissions) > 0 && len(*permissions) != len(createRoleRequest.Permissions) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Uno o más IDs de permisos no son válidos"})
 		return
 	}
@@ -191,17 +185,11 @@ func (roleController *RoleController) UpdateRole(c *gin.Context) {
 		return
 	}
 
-	// Validar que hay permisos especificados
-	if len(updateRoleRequest.Permissions) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Se requiere al menos un permiso para actualizar un rol"})
-		return
-	}
-
-	// Obtener permisos usando FindPermissionsByIds
+	// Obtener permisos usando FindPermissionsByIds (si hay permisos solicitados)
 	permissions := model.FindPermissionsByIds(updateRoleRequest.Permissions)
 
-	// Validar que todos los permisos solicitados existen
-	if len(*permissions) == 0 || len(*permissions) != len(updateRoleRequest.Permissions) {
+	// Validar que todos los permisos solicitados existen (solo si se especificaron permisos)
+	if len(updateRoleRequest.Permissions) > 0 && len(*permissions) != len(updateRoleRequest.Permissions) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Uno o más IDs de permisos no son válidos"})
 		return
 	}

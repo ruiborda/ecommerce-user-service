@@ -8,6 +8,7 @@ import (
 	dto "github.com/ruiborda/ecommerce-user-service/src/dto/common"
 	"github.com/ruiborda/ecommerce-user-service/src/dto/role"
 	"github.com/ruiborda/ecommerce-user-service/src/mapper"
+	"github.com/ruiborda/ecommerce-user-service/src/model"
 	"github.com/ruiborda/ecommerce-user-service/src/repository"
 	"github.com/ruiborda/ecommerce-user-service/src/repository/impl"
 )
@@ -26,6 +27,15 @@ func NewRoleServiceImpl() *RoleServiceImpl {
 
 // CreateRole crea un nuevo rol
 func (s *RoleServiceImpl) CreateRole(request *role.CreateRoleRequest) *role.CreateRoleResponse {
+	// Validar permisos si se proporcionan
+	if len(request.Permissions) > 0 {
+		permissions := model.FindPermissionsByIds(request.Permissions)
+		if len(*permissions) != len(request.Permissions) {
+			log.Printf("Uno o más IDs de permisos no son válidos")
+			return nil
+		}
+	}
+
 	// Mapear request a modelo
 	roleModel := s.roleMapper.CreateRoleRequestToRole(request)
 
@@ -78,6 +88,15 @@ func (s *RoleServiceImpl) UpdateRoleById(request *role.UpdateRoleRequest) *role.
 	if existingRole == nil {
 		log.Printf("Role not found with ID: %s", request.Id)
 		return nil
+	}
+
+	// Validar permisos si se proporcionan
+	if len(request.Permissions) > 0 {
+		permissions := model.FindPermissionsByIds(request.Permissions)
+		if len(*permissions) != len(request.Permissions) {
+			log.Printf("Uno o más IDs de permisos no son válidos")
+			return nil
+		}
 	}
 
 	// Actualizar el modelo de rol con datos de la solicitud
