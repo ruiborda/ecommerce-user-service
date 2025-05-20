@@ -30,6 +30,15 @@ const (
 	UpdateUser        = 503
 	DeleteUser        = 504
 	GetUsersPaginated = 505
+
+	// Product Management
+	CreateProduct        = 601
+	GetProductById       = 602
+	UpdateProduct        = 603
+	DeleteProduct        = 604
+	GetProductsPaginated = 605
+	AdjustProductStock   = 606
+	SearchProducts       = 607
 )
 
 func GetAllPermissionsMap() *map[int]Permission {
@@ -127,6 +136,55 @@ func GetAllPermissionsMap() *map[int]Permission {
 			Path:        "/users/pages",
 			Name:        "Ver Usuarios Paginados",
 			Description: "Permiso para obtener usuarios de forma paginada",
+		},
+		CreateProduct: {
+			Id:          CreateProduct,
+			Method:      "POST",
+			Path:        "/products",
+			Name:        "Crear Producto",
+			Description: "Permiso para crear un nuevo producto en el catálogo",
+		},
+		GetProductById: {
+			Id:          GetProductById,
+			Method:      "GET",
+			Path:        "/products/:id",
+			Name:        "Ver Producto por ID",
+			Description: "Permiso para obtener los detalles de un producto específico por su ID",
+		},
+		UpdateProduct: {
+			Id:          UpdateProduct,
+			Method:      "PUT",
+			Path:        "/products",
+			Name:        "Actualizar Producto",
+			Description: "Permiso para modificar la información de un producto existente",
+		},
+		DeleteProduct: {
+			Id:          DeleteProduct,
+			Method:      "DELETE",
+			Path:        "/products/:id",
+			Name:        "Eliminar Producto",
+			Description: "Permiso para eliminar un producto del catálogo por su ID",
+		},
+		GetProductsPaginated: {
+			Id:          GetProductsPaginated,
+			Method:      "GET",
+			Path:        "/products/pages",
+			Name:        "Ver Productos Paginados",
+			Description: "Permiso para obtener productos de forma paginada",
+		},
+		AdjustProductStock: {
+			Id:          AdjustProductStock,
+			Method:      "PATCH",
+			Path:        "/products/:id/stock",
+			Name:        "Ajustar Stock de Producto",
+			Description: "Permiso para incrementar o decrementar el stock de un producto",
+		},
+		SearchProducts: {
+			Id:          SearchProducts,
+			Method:      "GET",
+			Path:        "/products/search",
+			Name:        "Buscar Productos con Filtros",
+			Description: "Permiso para buscar productos por términos y filtros avanzados (similar a Amazon)",
 		},
 	}
 	return PermissionsMap
