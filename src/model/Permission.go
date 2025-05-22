@@ -50,7 +50,7 @@ func GetAllPermissionsMap() *map[int]Permission {
 			Id:          GetAllPermissions,
 			Method:      "GET",
 			Path:        "/permissions",
-			Name:        "Ver Todos los Permisos",
+			Name:        "Ver Todos los Permisos UPDATED",
 			Description: "Permiso para obtener todos los permisos del sistema",
 		},
 		GetPermissionById: {
