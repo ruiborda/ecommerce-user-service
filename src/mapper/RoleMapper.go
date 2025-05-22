@@ -1,4 +1,3 @@
-// filepath: /home/rui/ecommerce/UserService/src/mapper/RoleMapper.go
 package mapper
 
 import (
@@ -9,7 +8,6 @@ import (
 type RoleMapper struct {
 }
 
-// CreateRoleRequestToRole convierte un CreateRoleRequest a un modelo Role
 func (m *RoleMapper) CreateRoleRequestToRole(request *role.CreateRoleRequest) *model.Role {
 	// Convertir IDs de permisos a objetos de permisos
 	permissions := model.FindPermissionsByIds(request.Permissions)
@@ -20,46 +18,57 @@ func (m *RoleMapper) CreateRoleRequestToRole(request *role.CreateRoleRequest) *m
 	}
 }
 
-// RoleToCreateRoleResponse convierte un modelo Role a un CreateRoleResponse
-func (m *RoleMapper) RoleToCreateRoleResponse(model *model.Role) *role.CreateRoleResponse {
+func (m *RoleMapper) RoleToCreateRoleResponse(roleModel *model.Role) *role.CreateRoleResponse {
+	permissions := roleModel.Permissions
+	if permissions == nil {
+		emptyPermissions := make([]model.Permission, 0)
+		permissions = &emptyPermissions
+	}
+
 	return &role.CreateRoleResponse{
-		Id:          model.Id,
-		Code:        model.Code,
-		Permissions: model.Permissions,
+		Id:          roleModel.Id,
+		Code:        roleModel.Code,
+		Permissions: permissions,
 	}
 }
 
-// RoleToGetRoleByIdResponse convierte un modelo Role a un GetRoleByIdResponse
-func (m *RoleMapper) RoleToGetRoleByIdResponse(model *model.Role) *role.GetRoleByIdResponse {
+func (m *RoleMapper) RoleToGetRoleByIdResponse(roleModel *model.Role) *role.GetRoleByIdResponse {
+	permissions := roleModel.Permissions
+	if permissions == nil {
+		emptyPermissions := make([]model.Permission, 0)
+		permissions = &emptyPermissions
+	}
+
 	return &role.GetRoleByIdResponse{
-		Id:          model.Id,
-		Code:        model.Code,
-		Permissions: model.Permissions,
+		Id:          roleModel.Id,
+		Code:        roleModel.Code,
+		Permissions: permissions,
 	}
 }
 
-// UpdateRoleRequestToRole actualiza un modelo Role existente con datos de UpdateRoleRequest
 func (m *RoleMapper) UpdateRoleRequestToRole(request *role.UpdateRoleRequest, existingModel *model.Role) *model.Role {
-	// Convertir IDs de permisos a objetos de permisos
 	permissions := model.FindPermissionsByIds(request.Permissions)
 
-	// Actualizar los campos existentes
 	existingModel.Code = request.Code
 	existingModel.Permissions = permissions
 
 	return existingModel
 }
 
-// RoleToUpdateRoleResponse convierte un modelo Role a un UpdateRoleResponse
-func (m *RoleMapper) RoleToUpdateRoleResponse(model *model.Role) *role.UpdateRoleResponse {
+func (m *RoleMapper) RoleToUpdateRoleResponse(roleModel *model.Role) *role.UpdateRoleResponse {
+	permissions := roleModel.Permissions
+	if permissions == nil {
+		emptyPermissions := make([]model.Permission, 0)
+		permissions = &emptyPermissions
+	}
+
 	return &role.UpdateRoleResponse{
-		Id:          model.Id,
-		Code:        model.Code,
-		Permissions: model.Permissions,
+		Id:          roleModel.Id,
+		Code:        roleModel.Code,
+		Permissions: permissions,
 	}
 }
 
-// RoleToDeleteRoleByIdResponse convierte un resultado de eliminación a un DeleteRoleByIdResponse
 func (m *RoleMapper) RoleToDeleteRoleByIdResponse(roleId string, success bool) *role.DeleteRoleByIdResponse {
 	return &role.DeleteRoleByIdResponse{
 		Success: success,
@@ -67,7 +76,6 @@ func (m *RoleMapper) RoleToDeleteRoleByIdResponse(roleId string, success bool) *
 	}
 }
 
-// Función auxiliar para crear un mensaje adecuado para roles
 func getDeleteRoleMessage(roleId string, success bool) string {
 	if success {
 		return "Role with ID " + roleId + " was successfully deleted"
@@ -75,15 +83,20 @@ func getDeleteRoleMessage(roleId string, success bool) string {
 	return "Failed to delete role with ID " + roleId
 }
 
-// RolesToGetRolesResponse convierte una lista de modelos Role a una lista de GetRoleByIdResponse
 func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.GetRoleByIdResponse {
 	var responses []*role.GetRoleByIdResponse
 
-	for _, model := range models {
+	for _, roleModel := range models {
+		permissions := roleModel.Permissions
+		if permissions == nil {
+			emptyPermissions := make([]model.Permission, 0)
+			permissions = &emptyPermissions
+		}
+
 		response := &role.GetRoleByIdResponse{
-			Id:          model.Id,
-			Code:        model.Code,
-			Permissions: model.Permissions,
+			Id:          roleModel.Id,
+			Code:        roleModel.Code,
+			Permissions: permissions,
 		}
 
 		responses = append(responses, response)
@@ -92,14 +105,10 @@ func (m *RoleMapper) RolesToGetRolesResponse(models []*model.Role) []*role.GetRo
 	return responses
 }
 
-// GetRoleByIdResponseArrayToArray convierte directamente un array de GetRoleByIdResponse a otro array
-// Esta función se usa cuando ya tenemos una lista de DTOs y necesitamos mantenerlos en el mismo formato
 func (m *RoleMapper) GetRoleByIdResponseArrayToArray(dtos []*role.GetRoleByIdResponse) []*role.GetRoleByIdResponse {
-	// En este caso simplemente devolvemos el mismo array ya que ya está en el formato correcto
 	return dtos
 }
 
-// RolesToGetRolesByIdsResponse convierte una lista de modelos Role a una respuesta GetRolesByIdsResponse
 func (m *RoleMapper) RolesToGetRolesByIdsResponse(models []*model.Role) *role.GetRolesByIdsResponse {
 	roleResponses := m.RolesToGetRolesResponse(models)
 	return &role.GetRolesByIdsResponse{

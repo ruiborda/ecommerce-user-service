@@ -6,10 +6,8 @@ import (
 	"time"
 )
 
-type UserMapper struct {
-}
+type UserMapper struct {}
 
-// CreateUserRequestToUser convierte un CreateUserRequest a un modelo User
 func (m *UserMapper) CreateUserRequestToUser(request *user.CreateUserRequest) *model.User {
 	return &model.User{
 		Email:                  request.Email,
@@ -21,7 +19,6 @@ func (m *UserMapper) CreateUserRequestToUser(request *user.CreateUserRequest) *m
 	}
 }
 
-// UserToCreateUserResponse convierte un modelo User a un CreateUserResponse
 func (m *UserMapper) UserToCreateUserResponse(model *model.User, roles *[]model.Role) *user.CreateUserResponse {
 	return &user.CreateUserResponse{
 		Id:           model.Id,
@@ -35,9 +32,6 @@ func (m *UserMapper) UserToCreateUserResponse(model *model.User, roles *[]model.
 	}
 }
 
-// GetUserByIdRequestToUser (no es necesario, ya que es solo un ID)
-
-// UserToGetUserByIdResponse convierte un modelo User a un GetUserByIdResponse
 func (m *UserMapper) UserToGetUserByIdResponse(model *model.User, roles *[]model.Role) *user.GetUserByIdResponse {
 	return &user.GetUserByIdResponse{
 		Id:                     model.Id,
@@ -52,25 +46,20 @@ func (m *UserMapper) UserToGetUserByIdResponse(model *model.User, roles *[]model
 	}
 }
 
-// UpdateUserRequestToUser convierte un UpdateUserRequest a un modelo User
 func (m *UserMapper) UpdateUserRequestToUser(request *user.UpdateUserRequest, existingModel *model.User) *model.User {
-	// Mantener los datos que no se deben modificar
 	existingModel.Email = request.Email
 	existingModel.FullName = request.FullName
 	existingModel.RoleIds = request.RoleIds
 
-	// Si hay una nueva contraseña, actualizar el hash de la contraseña
 	if request.Password != "" {
-		existingModel.PasswordHash = request.Password // Ya está hasheada en el servicio
+		existingModel.PasswordHash = request.Password 
 	}
 
-	// Actualizar timestamp
 	existingModel.UpdatedAt = time.Now()
 
 	return existingModel
 }
 
-// UserToUpdateUserResponse convierte un modelo User a un UpdateUserResponse
 func (m *UserMapper) UserToUpdateUserResponse(model *model.User, roles *[]model.Role) *user.UpdateUserResponse {
 	return &user.UpdateUserResponse{
 		Id:                     model.Id,
@@ -85,9 +74,6 @@ func (m *UserMapper) UserToUpdateUserResponse(model *model.User, roles *[]model.
 	}
 }
 
-// DeleteUserByIdRequestToUser (no es necesario, ya que es solo un ID)
-
-// UserToDeleteUserByIdResponse convierte un resultado de eliminación a un DeleteUserByIdResponse
 func (m *UserMapper) UserToDeleteUserByIdResponse(userId string, success bool) *user.DeleteUserByIdResponse {
 	return &user.DeleteUserByIdResponse{
 		Success: success,
@@ -95,7 +81,6 @@ func (m *UserMapper) UserToDeleteUserByIdResponse(userId string, success bool) *
 	}
 }
 
-// Función auxiliar para crear un mensaje adecuado
 func getDeleteMessage(userId string, success bool) string {
 	if success {
 		return "User with ID " + userId + " was successfully deleted"
@@ -103,9 +88,6 @@ func getDeleteMessage(userId string, success bool) string {
 	return "Failed to delete user with ID " + userId
 }
 
-// GetUsersByIdsRequestToUsers (no es necesario, ya que es solo una lista de IDs)
-
-// UsersToGetUsersByIdsResponse convierte una lista de modelos User a una lista de GetUserByIdResponse
 func (m *UserMapper) UsersToGetUsersByIdsResponse(models []*model.User, rolesMap map[string]*[]model.Role) *user.GetUsersByIdsResponse {
 	var userResponses []*user.GetUserByIdResponse
 
