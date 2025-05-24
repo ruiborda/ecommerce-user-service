@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/prod.Dockerfile
+    volumes:
+      - .:/workspace
+      - go-modules:/go/pkg/mod
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      - firestore-emulator
+    command: sh -c "go run main.go"
+
+  firestore-emulator:
+    image: mtlynch/firestore-emulator:latest
+    ports:
+      - "8200:8200"
+    environment:
+      - FIRESTORE_PROJECT_ID=ecommerce-user-service-local
+      - PORT=8200
+
+volumes:
+  go-modules:
